@@ -1,0 +1,25 @@
+defaults:
+  - eval_schema
+  - _self_
+
+run_dir: ???                    # Required: logs/<run>, absolute or relative.
+device: cuda:0
+watch: false
+ckpt: null                     # null evaluates pending ckpt_*.pt in run_dir.
+record: null                   # Trajectory NPZ; requires a specific ckpt.
+motion_dir: null                # null uses the checkpoint's motion directory.
+every: 1                       # Every n-th checkpoint among all saved checkpoints.
+njmax: 1536
+nconmax: 128
+epa_horizon: 128
+headless: false
+
+# Evaluation must not overwrite the training run's .hydra configuration.
+hydra:
+  job:
+    chdir: false
+  run:
+    dir: ${run_dir}/evaluation/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: ${run_dir}/evaluation/multirun/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.num}

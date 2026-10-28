@@ -1,0 +1,54 @@
+# One-GPU motion-tracking hyperparameters verified against arXiv:2610.28480v1,
+# Tables A.4/A.5, Algorithm A.1 and Figure 5(a).
+# https://arxiv.org/pdf/2610.28480
+# Pins the published numerical hyperparameters independently of default changes.
+# See docs/training.md for the parameter mapping and experimental differences.
+defaults:
+  - train
+  - _self_
+
+run_name: paper
+amp: none                     # FP32 tensors and TF32 matmuls, not bf16.
+tf32: true
+wm_only_iters: 0               # Algorithm A.1 updates policy from iteration 1.
+
+# Table A.5: world model, imagination, critic, collection and schedule.
+wm_window: 8
+wm_batches: 10
+wm_batch: 2048
+horizon: 32
+pi_batch: 4096
+gamma: 0.99
+lam: 0.95
+critic_epochs: 5
+critic_minibatches: 4
+no_critic: false
+num_envs: 4096
+action_noise: 0.1
+buffer_steps: 1000
+utd: 0.4
+lr: 0.0002
+lr_decay_iters: 250000
+iterations: 320000
+optimizer:
+  pi_betas: [0.9, 0.95]
+  wm_grad_norm: 1.0
+  pi_grad_norm: 1.0
+  pi_grad_value: 0.1
+  critic_grad_norm: 1.0
+  lr_final_factor: 0.03
+
+# Table A.4: motion-tracking interface (one policy/critic update per iteration).
+hist: 10
+goal_frames: 10
+network:
+  wm_hidden: [2048, 2048, 2048]
+  encoder_hidden: [2048, 1024, 512, 256]
+  decoder_hidden: [2048, 1024, 512, 256]
+  critic_hidden: [256, 128]
+  latent_dim: 32
+
+# warmup_steps=64 remains a replay-bootstrap implementation choice, unpublished.
+# Data defaults to the available LAFAN1 NPZs. The paper's main experiment uses
+# filtered BONES-SEED; select its separately prepared NPZs via motion_dir=....
+# This is a single-GPU preset; merely changing lr/device does not implement DDP.

@@ -1,0 +1,30 @@
+defaults:
+  - play_schema
+  - _self_
+
+run_dir: ???                    # logs/<run>; required.
+ckpt: null                      # null loads <run_dir>/last.pt.
+device: cuda:0
+motion_dir: null                # null uses the checkpoint's motion_dir.
+clip: null                      # null selects the first clip; switch in the browser.
+host: 127.0.0.1                 # Use SSH forwarding to access from your computer.
+port: 8080
+fps: 50                        # Browser refresh rate; matches the 50 Hz control loop.
+speed: 1.0                     # Playback speed, 0.1 to 4.0.
+paused: false
+loop: true                     # Restart the selected clip after completion/failure.
+show_reference: true           # Blue translucent reference robot.
+align_reference: false         # Global robot/object reference; true aligns the robot ghost only.
+reference_opacity: 0.3          # 0 (invisible) to 1 (opaque).
+njmax: 1536
+nconmax: 128
+epa_horizon: 128
+
+hydra:
+  job:
+    chdir: false
+  run:
+    dir: ${run_dir}/play/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: ${run_dir}/play/multirun/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.num}

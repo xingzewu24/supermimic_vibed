@@ -1,0 +1,50 @@
+# caches and build output
+.cache/
+__pycache__/
+*.pyc
+build_*.log
+# uv environment and local tool caches
+.venv/
+.env
+.env.*
+!.env.example
+swanlog/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+# local-only documentation, logs, results, and scratch source
+/docs/
+logs/
+/results/
+/src/
+# local third-party repository checkouts
+/third-party/
+# training checkpoints
+*.pt
+# rendered videos and recorded trajectories (derived from CC BY-NC-ND LAFAN1 motions)
+*.mp4
+*.npz
+# third-party paper
+*.pdf
+
+# Data allowlist: one HOI test clip and its required runtime assets only.
+# Keep these exceptions after *.npz so the selected source motion is tracked.
+/data/**
+!/data/hoi/
+!/data/hoi/manifest.json
+!/data/hoi/motions/
+!/data/hoi/motions/test/
+!/data/hoi/motions/test/sub16_largebox_012_v00.npz
+!/data/hoi/objects/
+!/data/hoi/objects/largebox/
+!/data/hoi/objects/largebox/object.xml
+!/data/hoi/objects/largebox/largebox.obj
+!/data/tracking/
+!/data/tracking/robot/
+!/data/tracking/robot/g1_inspire/
+!/data/tracking/robot/g1_inspire/g1_inspire.xml
+!/data/tracking/robot/g1_inspire/g1_29dof_rev_1_0_with_inspire_hand_DFQ.urdf
+!/data/tracking/robot/g1_inspire/meshes/
+!/data/tracking/robot/g1_inspire/meshes/*.STL

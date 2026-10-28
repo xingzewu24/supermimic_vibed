@@ -1,0 +1,115 @@
+# Complete training template. These values preserve this codebase's defaults.
+# Copy this file, then use --config-path /absolute/path --config-name my_train.
+# Overrides use key=value; booleans use true/false (e.g. no_compile=true).
+defaults:
+  - train_schema
+  - _self_
+
+# Run, input and output. ${repo:} always resolves to the installed project root.
+run_name: run
+device: cuda:0
+seed: 0
+motion_dir: ${repo:}/data/hoi/motions/test  # Split, raw 50 Hz HOI NPZs, loaded read-only.
+motion_clips: null              # All NPZ clips; e.g. [sub16_largebox_012_v00] for the first fitting stage.
+hand:
+  action_rate_weight: 0.01
+  velocity_weight: 0.0           # Legacy compatibility field; hand speed is no longer penalized.
+  joint_limit_weight: 2.0
+  wm_loss_weight: 1.0            # Hand loss is averaged separately from the body loss.
+object:
+  pos_std: 0.2                   # Aligned with g1_hoi_learning/configs/track/train.yaml (m).
+  rot_std: 0.3                   # Orientation tolerance (rad), same reference training config.
+  pos_weight: 2.0
+  rot_weight: 2.0
+  wm_loss_weight: 1.0            # Object loss is averaged separately.
+robot_model: g1_inspire
+control_version: 5              # No finger tracking reward; object rewards aligned to reference training.
+task: g1_inspire_hoi
+state_version: 1
+motion_signature: null         # Filled from loaded motions/assets; checked on resume.
+log_dir: ${repo:}/logs/${run_name}
+resume: null                    # Full last.pt; re-collects replay on restart.
+init_from: null                 # Matching WM/policy parameters only; fresh critic/replay/normalizers.
+
+# Simulator and replay (Table A.5 values, per GPU).
+num_envs: 4096
+buffer_steps: 1000              # Replay capacity = buffer_steps * num_envs.
+utd: 0.4                        # Training iterations per vectorized simulator step.
+action_noise: 0.1               # Std of Gaussian action exploration noise.
+warmup_steps: 64                # Implementation setting; not specified in paper.
+njmax: 1536                     # Full Inspire hands can exceed 740 rows at floor-level resets.
+nconmax: 128                    # Contacts allocated per environment.
+epa_horizon: 128                # EPA edge workspace per convex pair; backend 3.11 default 24 can overflow.
+headless: false                 # Compatibility field; simulator is always headless.
+
+# Schedule. iterations is the total target, also when resuming.
+iterations: 320000
+wm_only_iters: 500              # Codebase warm start; paper profile uses 0.
+lr: 0.0002                     # Initial LR of all three Adam optimizers.
+lr_decay_iters: 250000
+ckpt_every: 2000
+log_every: 50
+
+# Experiment tracking. Credentials come from SWANLAB_API_KEY or the repo .env,
+# never from Hydra config (which is saved in checkpoints and uploaded).
+logger:
+  backend: swanlab              # swanlab | none; CSV/stdout are always retained.
+  project: supermimic
+  workspace: null               # null uses your personal SwanLab workspace.
+  mode: online                  # online | offline | disabled
+
+# World-model fit: wm_batches gradient updates per training iteration.
+wm_window: 8
+wm_batches: 10
+wm_batch: 2048                  # Number of replay windows per gradient update.
+
+# Policy imagination and critic (Tables A.4/A.5).
+pi_batch: 4096                  # Imagined rollouts per policy update.
+horizon: 32
+hist: 10                       # Observation history; changes network dimensions.
+goal_frames: 10                # Future references; changes network dimensions.
+gamma: 0.99
+lam: 0.95
+critic_epochs: 5
+critic_minibatches: 4
+no_critic: false
+
+# MLP widths and bounded motion latent (Table A.4).
+network:
+  wm_hidden: [2048, 2048, 2048]
+  encoder_hidden: [2048, 1024, 512, 256]
+  decoder_hidden: [2048, 1024, 512, 256]
+  critic_hidden: [256, 128]
+  latent_dim: 32
+
+# Table A.5 clipping/schedule and explicit PyTorch Adam defaults.
+# WM/critic betas, epsilon and weight decay are implementation defaults;
+# the paper specifies Adam but does not publish these values.
+optimizer:
+  wm_betas: [0.9, 0.999]
+  pi_betas: [0.9, 0.95]
+  critic_betas: [0.9, 0.999]
+  eps: 1.0e-8
+  weight_decay: 0.0
+  wm_grad_norm: 1.0
+  pi_grad_norm: 1.0
+  pi_grad_value: 0.1
+  critic_grad_norm: 1.0
+  lr_final_factor: 0.03
+
+# Runtime choices. Paper uses TF32; codebase defaults retain bf16 autocast.
+amp: bf16                      # bf16 | none; none with tf32=true selects TF32.
+tf32: true
+no_compile: false
+profile: ${oc.env:SM_PROFILE,false}
+
+# Keep relative user paths relative to the invocation directory.
+# Every multirun job gets a separate output directory and replay/checkpoints.
+hydra:
+  job:
+    chdir: false
+  run:
+    dir: ${log_dir}
+  sweep:
+    dir: ${log_dir}/multirun/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.num}

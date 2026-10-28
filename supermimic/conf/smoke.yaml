@@ -1,0 +1,22 @@
+# Tiny end-to-end diagnostic; inherits the codebase defaults.
+defaults:
+  - train
+  - _self_
+
+run_name: smoke
+num_envs: 8
+buffer_steps: 32
+warmup_steps: 8
+iterations: 2
+wm_only_iters: 0
+wm_window: 2
+wm_batches: 1
+wm_batch: 4
+pi_batch: 4
+horizon: 3
+hist: 3
+goal_frames: 2
+critic_epochs: 1
+critic_minibatches: 1
+log_every: 1
+no_compile: true

@@ -1,0 +1,12 @@
+<mujoco model="MuJoCo Model">
+  <compiler angle="radian" />
+  <asset>
+    <mesh name="largebox" file="largebox.obj" />
+  </asset>
+  <worldbody>
+    <body name="largebox">
+      <joint name="object_free_joint" type="free" />
+      <geom name="object_collision" type="mesh" contype="4" conaffinity="3" density="25" rgba="0.85 0.45 0.2 1" mesh="largebox" />
+    </body>
+  </worldbody>
+</mujoco>
